@@ -93,6 +93,13 @@ enable_parsing {
                     continue
                 }
 
+                # https://github.com/matrix-org/synapse/issues/7530
+                # sso endpoints should not be handled by workers
+                if ((line ~ /sso|saml|cas|oidc/)) {
+                    worker_stanza_append("  # " api_endpoint_regex linefeed)
+                    continue
+                }
+
                 # disable endpoints which specify complications
                 if (endpoints_seem_conditional) {
                     # only add notice if previous line didn't match
