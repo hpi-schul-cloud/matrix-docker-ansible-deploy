@@ -5,3 +5,5 @@
 /roles/*/files/scratchpad
 .DS_Store
 .python-version
+/roles/matrix-synapse/files/workers.upstream-documentation.md
+/roles/matrix-synapse/vars/workers.yml
