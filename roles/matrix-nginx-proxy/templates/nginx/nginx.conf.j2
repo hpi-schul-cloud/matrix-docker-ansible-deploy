@@ -17,7 +17,6 @@ pid /tmp/nginx.pid;
 
 events {
 	worker_connections {{ matrix_nginx_proxy_worker_connections }};
-
 {% for configuration_block in matrix_nginx_proxy_proxy_event_additional_configuration_blocks %}
 	{{- configuration_block }}
 {% endfor %}

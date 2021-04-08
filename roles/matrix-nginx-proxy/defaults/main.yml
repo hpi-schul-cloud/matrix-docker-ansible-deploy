@@ -27,9 +27,6 @@ matrix_nginx_proxy_container_additional_volumes: []
 # A list of extra arguments to pass to the container
 matrix_nginx_proxy_container_extra_arguments: []
 
-# Amount of conncurrent connections of the one nginx worker
-matrix_nginx_proxy_worker_connections: '1024'
-
 # Controls whether matrix-nginx-proxy serves its vhosts over HTTPS or HTTP.
 #
 # If enabled:
