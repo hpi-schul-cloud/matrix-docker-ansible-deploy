@@ -1,7 +1,0 @@
----
-
-- include_tasks: "{{ role_path }}/tasks/workers/setup_install.yml"
-  when: "matrix_synapse_enabled|bool and matrix_synapse_workers_enabled|bool"
-
-- include_tasks: "{{ role_path }}/tasks/workers/setup_uninstall.yml"
-  when: "not matrix_synapse_workers_enabled|bool"
