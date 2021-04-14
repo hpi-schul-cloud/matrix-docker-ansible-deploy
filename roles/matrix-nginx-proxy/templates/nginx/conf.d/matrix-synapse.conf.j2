@@ -1,5 +1,16 @@
 #jinja2: lstrip_blocks: "True"
 
+{% macro cors_options_response() %}
+	if ($request_method = OPTIONS) {
+		add_header 'Access-Control-Allow-Origin' '*';
+		add_header 'Access-Control-Allow-Methods' 'GET, HEAD, POST, PUT, DELETE, OPTIONS';
+		add_header 'Access-Control-Allow-Headers' 'Origin, X-Requested-With, Content-Type, Accept, Authorization, Date';
+		add_header 'Content-Type' 'text/plain charset=UTF-8';
+		add_header 'Content-Length' 0;
+		return 204;
+	}
+{% endmacro %}
+
 {% set generic_workers = matrix_nginx_proxy_synapse_workers_list|selectattr('type', 'equalto', 'generic_worker')|list %}
 {% set media_repository_workers = matrix_nginx_proxy_synapse_workers_list|selectattr('type', 'equalto', 'media_repository')|list %}
 {% set user_dir_workers = matrix_nginx_proxy_synapse_workers_list|selectattr('type', 'equalto', 'user_dir')|list %}
@@ -70,6 +81,8 @@ server {
 	gzip on;
 	gzip_types text/plain application/json;
 
+	add_header 'Access-Control-Max-Age' 1728000;
+
 	{% if matrix_nginx_proxy_synapse_workers_enabled %}
 		{# Workers redirects BEGIN #}
 
@@ -77,6 +90,7 @@ server {
 			# https://github.com/matrix-org/synapse/blob/master/docs/workers.md#synapseappgeneric_worker
 			{% for location in matrix_nginx_proxy_synapse_generic_worker_client_server_locations %}
 			location ~ {{ location }} {
+				{{ cors_options_response() }}
 				proxy_pass http://generic_worker_upstream$request_uri;
 				proxy_set_header Host $host;
 			}
@@ -87,6 +101,7 @@ server {
 			# https://github.com/matrix-org/synapse/blob/master/docs/workers.md#synapseappmedia_repository
 			{% for location in matrix_nginx_proxy_synapse_media_repository_locations %}
 			location ~ {{ location }} {
+				{{ cors_options_response() }}
 				proxy_pass http://media_repository_upstream$request_uri;
 				proxy_set_header Host $host;
 
@@ -102,6 +117,7 @@ server {
 			# https://github.com/matrix-org/synapse/blob/master/docs/workers.md#synapseappuser_dir
 			{% for location in matrix_nginx_proxy_synapse_user_dir_locations %}
 			location ~ {{ location }} {
+				{{ cors_options_response() }}
 				proxy_pass http://user_dir_upstream$request_uri;
 				proxy_set_header Host $host;
 			}
@@ -112,6 +128,7 @@ server {
 			# https://github.com/matrix-org/synapse/blob/master/docs/workers.md#synapseappfrontend_proxy
 			{% for location in matrix_nginx_proxy_synapse_frontend_proxy_locations %}
 			location ~ {{ location }} {
+				{{ cors_options_response() }}
 				proxy_pass http://frontend_proxy_upstream$request_uri;
 				proxy_set_header Host $host;
 			}
@@ -119,6 +136,7 @@ server {
 			{% if matrix_nginx_proxy_synapse_presence_disabled %}
 			# FIXME: keep in sync with synapse workers documentation manually
 			location ~ ^/_matrix/client/(api/v1|r0|unstable)/presence/[^/]+/status {
+				{{ cors_options_response() }}
 				proxy_pass http://frontend_proxy_upstream$request_uri;
 				proxy_set_header Host $host;
 			}
@@ -155,6 +173,7 @@ server {
 
 	{# Everything else just goes to the API server ##}
 	location / {
+		{{ cors_options_response() }}
 		{% if matrix_nginx_proxy_enabled %}
 			{# Use the embedded DNS resolver in Docker containers to discover the service #}
 			resolver 127.0.0.11 valid=5s;
