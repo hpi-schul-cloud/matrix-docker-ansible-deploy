@@ -389,6 +389,14 @@ matrix_nginx_proxy_synapse_media_repository_locations: []
 matrix_nginx_proxy_synapse_user_dir_locations: []
 matrix_nginx_proxy_synapse_frontend_proxy_locations: []
 
+# Decide how requeste are routed to the workers
+# e.g.
+# - false: Round Robin, route every request randomly
+# - 'ip_hash;': ensures that requests from the same subnet will always be passed to the same worker
+# - 'hash $remote_addr;': ensures that requests from the same client will always be passed to the same worker
+# - 'random two least_conn;': chooses between two randomly selected servers based on which currently has fewer active connections
+matrix_nginx_proxy_synapse_generic_worker_routing: 'random two least_conn;'
+
 # The amount of worker processes and connections
 # Consider increasing these when you are expecting high amounts of traffic
 # http://nginx.org/en/docs/ngx_core_module.html#worker_connections
