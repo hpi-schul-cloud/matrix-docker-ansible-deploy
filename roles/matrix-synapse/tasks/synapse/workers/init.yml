@@ -10,6 +10,7 @@
       instanceId: "{{ matrix_synapse_workers_generic_workers_port_range_start + item }}"
       port: "{{ matrix_synapse_workers_generic_workers_port_range_start + item }}"
       metrics_port: "{{ matrix_synapse_workers_generic_workers_metrics_range_start + item }}"
+      route: 'all'
   register: "matrix_synapse_workers_list_results_generic_workers"
   loop: "{{ range(0, matrix_synapse_workers_generic_workers_count|int)|list }}"
 

@@ -5,7 +5,7 @@ matrix_synapse_workers_generic_worker_endpoints:
   # expressions:
 
   # Sync requests
-  - ^/_matrix/client/(v2_alpha|r0)/sync$
+  #- ^/_matrix/client/(v2_alpha|r0)/sync$ (allow specific worker)
   - ^/_matrix/client/(api/v1|v2_alpha|r0)/events$
   - ^/_matrix/client/(api/v1|r0)/initialSync$
   - ^/_matrix/client/(api/v1|r0)/rooms/[^/]+/initialSync$
@@ -53,7 +53,7 @@ matrix_synapse_workers_generic_worker_endpoints:
   - ^/_matrix/client/(api/v1|r0|unstable)/publicised_groups/
 
   # Registration/login requests
-  - ^/_matrix/client/(api/v1|r0|unstable)/login$
+  #- ^/_matrix/client/(api/v1|r0|unstable)/login$ (allow specific worker)
   - ^/_matrix/client/(r0|unstable)/register$
 
   # Event sending requests
