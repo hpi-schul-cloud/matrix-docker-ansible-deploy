@@ -1,6 +1,6 @@
 #jinja2: lstrip_blocks: "True"
 worker_app: synapse.app.{{ matrix_synapse_worker_details.type }}
-worker_name: {{ matrix_synapse_worker_details.type ~ ':' ~ matrix_synapse_worker_details.port }}
+worker_name: {{ matrix_synapse_worker_details.type ~ '-' ~ matrix_synapse_worker_details.port }}
 
 {% if matrix_synapse_replication_listener_enabled %}
 worker_replication_host: matrix-synapse
@@ -16,6 +16,9 @@ worker_replication_http_port: {{ matrix_synapse_replication_http_port }}
 {% endif %}
 {% if matrix_synapse_worker_details.type in ['generic_worker'] %}
   {% set http_resources = http_resources+ ['federation'] %}
+{% endif %}
+{% if matrix_synapse_worker_details.route is defined and matrix_synapse_worker_details.route in ['events'] %}
+  {% set http_resources = http_resources+ ['replication'] %}
 {% endif %}
 {% if matrix_synapse_worker_details.type in ['media_repository'] %}
   {% set http_resources = http_resources + ['media'] %}

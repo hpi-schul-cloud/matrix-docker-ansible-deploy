@@ -2954,4 +2954,35 @@ redis:
   #
   password: {{ matrix_synapse_redis_password }}
 
+{% set generic_workers = matrix_nginx_proxy_synapse_workers_list|selectattr('type', 'equalto', 'generic_worker')|list %}
+{% set generic_workers_typing = generic_workers|selectattr('route', 'equalto', 'typing')|list %}
+{% set generic_workers_events = generic_workers|selectattr('route', 'equalto', 'events')|list %}
+
+{% if generic_workers_typing or generic_workers_events %}
+instance_map:
+{% for worker in generic_workers_typing %}
+  {{ worker.type }}-{{ worker.port }}:
+    host: matrix-synapse-worker-{{ worker.type | replace('_', '-') }}-{{ worker.instanceId }}
+    port: {{ worker.port }}
+{% endfor %}
+{% for worker in generic_workers_events %}
+  {{ worker.type }}-{{ worker.port }}:
+    host: matrix-synapse-worker-{{ worker.type | replace('_', '-') }}-{{ worker.instanceId }}
+    port: {{ worker.port }}
+{% endfor %}
+
+stream_writers:
+{% if generic_workers_events %}
+  events:
+{% for worker in generic_workers_events %}
+    - {{ worker.type }}-{{ worker.port }}
+{% endfor %}
+{% endif %}
+
+{% if generic_workers_typing %}
+  typing: {{ generic_workers_typing[0].type }}-{{ generic_workers_typing[0].port }}
+{% endif %}
+
+{% endif %}
+
 # vim:ft=yaml

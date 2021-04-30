@@ -1,20 +1,22 @@
 #jinja2: lstrip_blocks: "True"
 
 {% macro cors_options_response() %}
-	if ($request_method = OPTIONS) {
-		add_header 'Access-Control-Allow-Origin' '*';
-		add_header 'Access-Control-Allow-Methods' 'GET, HEAD, POST, PUT, DELETE, OPTIONS';
-		add_header 'Access-Control-Allow-Headers' 'Origin, X-Requested-With, Content-Type, Accept, Authorization, Date';
-		add_header 'Content-Type' 'text/plain charset=UTF-8';
-		add_header 'Content-Length' 0;
-		return 204;
-	}
+if ($request_method = OPTIONS) {
+					add_header 'Access-Control-Allow-Origin' '*';
+					add_header 'Access-Control-Allow-Methods' 'GET, HEAD, POST, PUT, DELETE, OPTIONS';
+					add_header 'Access-Control-Allow-Headers' 'Origin, X-Requested-With, Content-Type, Accept, Authorization, Date';
+					add_header 'Content-Type' 'text/plain charset=UTF-8';
+					add_header 'Content-Length' 0;
+					return 204;
+				}
 {% endmacro %}
 
 {% set generic_workers = matrix_nginx_proxy_synapse_workers_list|selectattr('type', 'equalto', 'generic_worker')|list %}
 {% set generic_workers_all = generic_workers|selectattr('route', 'equalto', 'all')|list %}
 {% set generic_workers_login = generic_workers|selectattr('route', 'equalto', 'login')|list %}
 {% set generic_workers_sync = generic_workers|selectattr('route', 'equalto', 'sync')|list %}
+{% set generic_workers_syncInitial = generic_workers|selectattr('route', 'equalto', 'syncInitial')|list %}
+{% set generic_workers_typing = generic_workers|selectattr('route', 'equalto', 'typing')|list %}
 {% set media_repository_workers = matrix_nginx_proxy_synapse_workers_list|selectattr('type', 'equalto', 'media_repository')|list %}
 {% set user_dir_workers = matrix_nginx_proxy_synapse_workers_list|selectattr('type', 'equalto', 'user_dir')|list %}
 {% set frontend_proxy_workers = matrix_nginx_proxy_synapse_workers_list|selectattr('type', 'equalto', 'frontend_proxy')|list %}
@@ -30,7 +32,7 @@
 
 		{% for worker in generic_workers_all %}
 			{% if matrix_nginx_proxy_enabled %}
-				server "matrix-synapse-worker-{{ worker.type }}-{{ worker.instanceId }}:{{ worker.port }}"{% if worker.parameters is defined %} {{worker.parameters}}{% endif %};
+				server "matrix-synapse-worker-{{ worker.type | replace('_', '-') }}-{{ worker.instanceId }}:{{ worker.port }}"{% if worker.parameters is defined %} {{worker.parameters}}{% endif %};
 			{% else %}
 				server "127.0.0.1:{{ worker.port }}";
 			{% endif %}
@@ -47,7 +49,7 @@
 
 		{% for worker in generic_workers_login %}
 			{% if matrix_nginx_proxy_enabled %}
-				server "matrix-synapse-worker-{{ worker.type }}-{{ worker.instanceId }}:{{ worker.port }}"{% if worker.parameters is defined %} {{worker.parameters}}{% endif %};
+				server "matrix-synapse-worker-{{ worker.type | replace('_', '-') }}-{{ worker.instanceId }}:{{ worker.port }}"{% if worker.parameters is defined %} {{worker.parameters}}{% endif %};
 			{% else %}
 				server "127.0.0.1:{{ worker.port }}";
 			{% endif %}
@@ -64,7 +66,36 @@
 
 		{% for worker in generic_workers_sync %}
 			{% if matrix_nginx_proxy_enabled %}
-				server "matrix-synapse-worker-{{ worker.type }}-{{ worker.instanceId }}:{{ worker.port }}"{% if worker.parameters is defined %} {{worker.parameters}}{% endif %};
+				server "matrix-synapse-worker-{{ worker.type | replace('_', '-') }}-{{ worker.instanceId }}:{{ worker.port }}"{% if worker.parameters is defined %} {{worker.parameters}}{% endif %};
+			{% else %}
+				server "127.0.0.1:{{ worker.port }}";
+			{% endif %}
+		{% endfor %}
+	}
+	{% endif %}
+
+	{% if generic_workers_syncInitial %}
+	upstream generic_worker_syncInitial_upstream {
+		# configure the load balancing
+		{% if matrix_nginx_proxy_synapse_generic_worker_routing %}
+			{{ matrix_nginx_proxy_synapse_generic_worker_routing }}
+		{% endif %}
+
+		{% for worker in generic_workers_syncInitial %}
+			{% if matrix_nginx_proxy_enabled %}
+				server "matrix-synapse-worker-{{ worker.type | replace('_', '-') }}-{{ worker.instanceId }}:{{ worker.port }}"{% if worker.parameters is defined %} {{worker.parameters}}{% endif %};
+			{% else %}
+				server "127.0.0.1:{{ worker.port }}";
+			{% endif %}
+		{% endfor %}
+	}
+	{% endif %}
+
+	{% if generic_workers_typing %}
+	upstream generic_worker_typing_upstream {
+		{% for worker in generic_workers_typing %}
+			{% if matrix_nginx_proxy_enabled %}
+				server "matrix-synapse-worker-{{ worker.type | replace('_', '-') }}-{{ worker.instanceId }}:{{ worker.port }}"{% if worker.parameters is defined %} {{worker.parameters}}{% endif %};
 			{% else %}
 				server "127.0.0.1:{{ worker.port }}";
 			{% endif %}
@@ -76,7 +107,7 @@
 	upstream frontend_proxy_upstream {
 		{% for worker in frontend_proxy_workers %}
 			{% if matrix_nginx_proxy_enabled %}
-				server "matrix-synapse-worker-{{ worker.type }}-{{ worker.instanceId }}:{{ worker.port }}";
+				server "matrix-synapse-worker-{{ worker.type | replace('_', '-') }}-{{ worker.instanceId }}:{{ worker.port }}";
 			{% else %}
 				server "127.0.0.1:{{ worker.port }}";
 			{% endif %}
@@ -88,7 +119,7 @@
 	upstream media_repository_upstream {
 		{% for worker in media_repository_workers %}
 			{% if matrix_nginx_proxy_enabled %}
-				server "matrix-synapse-worker-{{ worker.type }}-{{ worker.instanceId }}:{{ worker.port }}";
+				server "matrix-synapse-worker-{{ worker.type | replace('_', '-') }}-{{ worker.instanceId }}:{{ worker.port }}";
 			{% else %}
 				server "127.0.0.1:{{ worker.port }}";
 			{% endif %}
@@ -100,7 +131,7 @@
 	upstream user_dir_upstream {
 		{% for worker in user_dir_workers %}
 			{% if matrix_nginx_proxy_enabled %}
-				server "matrix-synapse-worker-{{ worker.type }}-{{ worker.instanceId }}:{{ worker.port }}";
+				server "matrix-synapse-worker-{{ worker.type | replace('_', '-') }}-{{ worker.instanceId }}:{{ worker.port }}";
 			{% else %}
 				server "127.0.0.1:{{ worker.port }}";
 			{% endif %}
@@ -135,7 +166,34 @@ server {
 		{% if generic_workers_sync %}
 			location ~ ^/_matrix/client/(v2_alpha|r0)/sync$ {
 				{{ cors_options_response() }}
-				proxy_pass http://generic_worker_sync_upstream$request_uri;
+				proxy_set_header Host $host;
+				{% if generic_workers_syncInitial %}
+					if ($arg_since) {
+						proxy_pass http://generic_worker_sync_upstream$request_uri;
+					}
+					proxy_pass http://generic_worker_syncInitial_upstream$request_uri;
+				{% else %}
+					proxy_pass http://generic_worker_sync_upstream$request_uri;
+				{% endif %}
+			}
+		{% endif %}
+
+		{% if generic_workers_sync or generic_workers_syncInitial %}
+			location ~ ^/_matrix/client/(api/v1|r0)/initialSync$ {
+				{{ cors_options_response() }}
+				proxy_set_header Host $host;
+				{% if generic_workers_syncInitial %}
+					proxy_pass http://generic_worker_syncInitial_upstream$request_uri;
+				{% else %}
+					proxy_pass http://generic_worker_sync_upstream$request_uri;
+				{% endif %}
+			}
+		{% endif %}
+
+		{% if generic_workers_typing %}
+			location ~ ^/_matrix/client/(api/v1|r0|unstable)/rooms/(?P<room_id>[^/]*)/typing/(?P<user_id>[^/]*)$ {
+				{{ cors_options_response() }}
+				proxy_pass http://generic_worker_typing_upstream$request_uri;
 				proxy_set_header Host $host;
 			}
 		{% endif %}
@@ -152,6 +210,14 @@ server {
 
 			{% if not generic_workers_sync %}
 				location ~ ^/_matrix/client/(v2_alpha|r0)/sync$ {
+					{{ cors_options_response() }}
+					proxy_pass http://generic_worker_upstream$request_uri;
+					proxy_set_header Host $host;
+				}
+			{% endif %}
+
+			{% if not generic_workers_sync and not generic_workers_syncInitial %}
+				location ~ ^/_matrix/client/(api/v1|r0)/initialSync$ {
 					{{ cors_options_response() }}
 					proxy_pass http://generic_worker_upstream$request_uri;
 					proxy_set_header Host $host;
